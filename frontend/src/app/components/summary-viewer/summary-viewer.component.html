@@ -1,0 +1,74 @@
+<div class="summary-viewer">
+  <nz-spin [nzSpinning]="loading">
+    <nz-card *ngIf="summary && !loading" [nzTitle]="summary.title">
+      <div class="summary-header">
+        <nz-badge
+          [nzStatus]="getCategoryColor(summary.category)"
+          [nzText]="summary.category"
+        ></nz-badge>
+        <div class="keywords" *ngIf="summary.keywords.length > 0">
+          <nz-tag
+            *ngFor="let keyword of summary.keywords"
+            [nzColor]="'default'"
+          >
+            {{ keyword }}
+          </nz-tag>
+        </div>
+      </div>
+
+      <div class="summary-content">
+        <p>{{ summary.summary }}</p>
+      </div>
+
+      <div class="summary-meta">
+        <div *ngIf="summary.channelName">
+          <strong>Channel:</strong> {{ summary.channelName }}
+        </div>
+        <div *ngIf="summary.threadName">
+          <strong>Thread:</strong> {{ summary.threadName }}
+        </div>
+        <div>
+          <strong>Created:</strong> {{ summary.createdAt | date : "medium" }}
+        </div>
+      </div>
+
+      <div class="attachments" *ngIf="summary.attachments.length > 0">
+        <h4>Attachments:</h4>
+        <div class="attachment-list">
+          <div
+            *ngFor="let attachment of summary.attachments"
+            class="attachment-item"
+          >
+            <a
+              [href]="attachment.url"
+              target="_blank"
+              *ngIf="!isImage(attachment)"
+            >
+              {{ attachment.filename }}
+            </a>
+            <img
+              *ngIf="isImage(attachment)"
+              nz-image
+              [nzSrc]="attachment.url"
+              [nzFallback]="attachment.url"
+              [style.width.px]="200"
+              [style.cursor]="'pointer'"
+              (click)="previewImage(attachment.url)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button
+          nz-button
+          nzType="primary"
+          (click)="saveSummary()"
+          [nzLoading]="saving"
+        >
+          Save Summary
+        </button>
+      </div>
+    </nz-card>
+  </nz-spin>
+</div>

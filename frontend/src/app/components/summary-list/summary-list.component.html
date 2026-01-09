@@ -1,0 +1,91 @@
+<div class="summary-list">
+  <div class="filters">
+    <nz-input-group style="width: 300px; margin-right: 16px">
+      <input
+        type="text"
+        nz-input
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search summaries..."
+      />
+    </nz-input-group>
+
+    <nz-select
+      [(ngModel)]="selectedCategory"
+      (ngModelChange)="onCategoryChange()"
+      nzPlaceHolder="Filter by category"
+      [nzAllowClear]="true"
+      style="width: 200px"
+    >
+      <nz-option
+        *ngFor="let category of categories"
+        [nzValue]="category"
+        [nzLabel]="category"
+      >
+      </nz-option>
+    </nz-select>
+  </div>
+
+  <nz-table
+    #basicTable
+    [nzData]="filteredSummaries"
+    [nzLoading]="loading"
+    [nzShowPagination]="true"
+    [nzPageSize]="10"
+  >
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Category</th>
+        <th>Keywords</th>
+        <th>Channel</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let summary of basicTable.data">
+        <td>
+          <strong>{{ summary.title }}</strong>
+          <div class="summary-preview">
+            {{ summary.summary.substring(0, 100) }}...
+          </div>
+        </td>
+        <td>
+          <nz-badge
+            [nzStatus]="getCategoryColor(summary.category)"
+            [nzText]="summary.category"
+          ></nz-badge>
+        </td>
+        <td>
+          <nz-tag
+            *ngFor="let keyword of summary.keywords.slice(0, 3)"
+            [nzColor]="'default'"
+          >
+            {{ keyword }}
+          </nz-tag>
+          <span *ngIf="summary.keywords.length > 3">...</span>
+        </td>
+        <td>{{ summary.channelName || "Unknown" }}</td>
+        <td>{{ summary.createdAt | date : "short" }}</td>
+        <td>
+          <button
+            nz-button
+            nzType="link"
+            nzDanger
+            nz-popconfirm
+            nzPopconfirmTitle="Are you sure you want to delete this summary?"
+            (nzOnConfirm)="deleteSummary(summary.id!)"
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </nz-table>
+
+  <nz-empty
+    *ngIf="!loading && filteredSummaries.length === 0"
+    nzNotFoundContent="No summaries found"
+  ></nz-empty>
+</div>

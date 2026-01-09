@@ -1,0 +1,19 @@
+.thread-selector {
+  margin-bottom: 16px;
+}
+
+.thread-link {
+  cursor: pointer;
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.thread-link:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  color: #ff4d4f;
+  padding: 16px;
+  text-align: center;
+}

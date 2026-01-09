@@ -1,0 +1,19 @@
+<div class="channel-selector">
+  <nz-select
+    [(ngModel)]="selectedChannelId"
+    (ngModelChange)="onChannelChange($event)"
+    [nzLoading]="loading"
+    nzPlaceHolder="Select a channel"
+    [nzShowSearch]="true"
+    nzNotFoundContent="No channels found"
+    style="width: 100%"
+  >
+    <nz-option
+      *ngFor="let channel of channels"
+      [nzValue]="channel.id"
+      [nzLabel]="channel.name"
+    >
+    </nz-option>
+  </nz-select>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+</div>

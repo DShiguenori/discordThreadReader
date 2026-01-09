@@ -1,0 +1,9 @@
+.channel-selector {
+  margin-bottom: 16px;
+}
+
+.error-message {
+  color: #ff4d4f;
+  margin-top: 8px;
+  font-size: 12px;
+}

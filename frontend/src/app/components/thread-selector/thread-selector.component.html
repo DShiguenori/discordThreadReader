@@ -1,0 +1,33 @@
+<div class="thread-selector">
+  <nz-spin [nzSpinning]="loading">
+    <nz-empty
+      *ngIf="!loading && threads.length === 0 && !error"
+      nzNotFoundContent="No threads found"
+    ></nz-empty>
+    <div *ngIf="error" class="error-message">{{ error }}</div>
+    <nz-list
+      *ngIf="threads.length > 0"
+      [nzDataSource]="threads"
+      [nzRenderItem]="item"
+      [nzBordered]="true"
+    >
+      <ng-template #item let-thread>
+        <nz-list-item>
+          <nz-list-item-meta>
+            <nz-list-item-meta-title>
+              <a (click)="selectThread(thread)" class="thread-link">{{
+                thread.name
+              }}</a>
+            </nz-list-item-meta-title>
+            <nz-list-item-meta-description>
+              {{ thread.messageCount }} message(s)
+              <span *ngIf="thread.lastActivity">
+                • Last activity: {{ thread.lastActivity | date : "short" }}
+              </span>
+            </nz-list-item-meta-description>
+          </nz-list-item-meta>
+        </nz-list-item>
+      </ng-template>
+    </nz-list>
+  </nz-spin>
+</div>

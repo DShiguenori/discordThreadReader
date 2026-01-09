@@ -1,0 +1,57 @@
+<nz-layout class="layout">
+  <nz-header class="header">
+    <div class="logo">Discord Topic Reader</div>
+    <div class="menu">
+      <button
+        nz-button
+        nzType="text"
+        [class.active]="currentView === 'main'"
+        (click)="switchView('main')"
+        class="menu-button"
+      >
+        <span nz-icon nzType="home"></span>
+        <span>Home</span>
+      </button>
+      <button
+        nz-button
+        nzType="text"
+        [class.active]="currentView === 'summaries'"
+        (click)="switchView('summaries')"
+        class="menu-button"
+      >
+        <span nz-icon nzType="file-text"></span>
+        <span>Saved Summaries</span>
+      </button>
+    </div>
+  </nz-header>
+  <nz-content class="content">
+    <div class="container" *ngIf="currentView === 'main'">
+      <h1>Select a Channel and Thread</h1>
+
+      <app-channel-selector
+        [selectedChannelId]="selectedChannel?.id || null"
+        (channelSelected)="onChannelSelected($event)"
+      >
+      </app-channel-selector>
+
+      <app-thread-selector
+        *ngIf="selectedChannel"
+        [channelId]="selectedChannel.id"
+        (threadSelected)="onThreadSelected($event)"
+      >
+      </app-thread-selector>
+
+      <app-summary-viewer
+        [summary]="summary"
+        [loading]="generatingSummary"
+        (saved)="onSummarySaved()"
+      >
+      </app-summary-viewer>
+    </div>
+
+    <div class="container" *ngIf="currentView === 'summaries'">
+      <h1>Saved Summaries</h1>
+      <app-summary-list></app-summary-list>
+    </div>
+  </nz-content>
+</nz-layout>
