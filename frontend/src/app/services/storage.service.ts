@@ -46,7 +46,9 @@ export class StorageService {
     });
   }
 
-  async saveSummary(summary: Summary): Promise<string> {
+  async saveSummary(
+    summary: Summary
+  ): Promise<{ id: string; backendSaved: boolean; error?: any }> {
     // Save locally first (always)
     await this.initDB();
     if (!this.db) {
@@ -65,17 +67,26 @@ export class StorageService {
       );
       // Update local copy with server ID if different
       if (savedSummary.id && savedSummary.id !== id) {
-        await this.db.put("summaries", { ...summaryWithId, id: savedSummary.id });
-        return savedSummary.id;
+        await this.db.put("summaries", {
+          ...summaryWithId,
+          id: savedSummary.id,
+        });
+        return { id: savedSummary.id, backendSaved: true };
       }
-    } catch (error) {
+      return { id, backendSaved: true };
+    } catch (error: any) {
       // Backend save failed, but local save succeeded
-      // Log warning but don't throw - local save is still successful
-      console.warn("Failed to save summary to backend API:", error);
-      console.warn("Summary saved locally only");
+      // Return info so caller can decide how to handle it
+      console.error("Failed to save summary to backend API:", error);
+      return {
+        id,
+        backendSaved: false,
+        error:
+          error?.error?.error ||
+          error?.message ||
+          "Backend unavailable or not configured",
+      };
     }
-
-    return id;
   }
 
   async getSummary(id: string): Promise<Summary | undefined> {

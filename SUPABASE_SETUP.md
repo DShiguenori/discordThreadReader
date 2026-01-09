@@ -38,27 +38,40 @@ This guide will help you set up Supabase to store summaries in a database instea
 
 ## Step 5: Configure Row Level Security (RLS)
 
-For development, we'll use a permissive policy. In production, you should set up proper authentication.
+For development, we'll use a permissive policy that allows anonymous access. In production, you should set up proper authentication.
 
-The migration script already includes a permissive policy, but if you need to adjust it:
+The migration script (`backend/supabase-migration.sql`) includes a permissive policy that allows all operations. **Important:** If you already created the table with a different policy, you may need to:
 
 1. Go to "Authentication" > "Policies" in the left sidebar
 2. Find the "summaries" table
-3. Make sure the policy allows INSERT, SELECT, UPDATE, DELETE operations
+3. Delete any existing policies
+4. Run the updated migration script again, or manually create a policy named "Allow public access" with `USING (true)` and `WITH CHECK (true)` for all operations
+
+The updated migration script will automatically drop old policies and create the correct one.
 
 ## Step 6: Update Backend Environment Variables
 
-1. Open `backend/.env` file (create it if it doesn't exist)
+1. Create `backend/.env` file (copy from `.env.example` if it exists, or create a new file)
 2. Add the following variables:
 
 ```env
+# Discord Bot Configuration
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
+
+# Supabase Configuration
 SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Server Configuration
+PORT=3000
+FRONTEND_URL=http://localhost:4200
 ```
 
 Replace:
-- `xxxxx` with your actual project subdomain
-- The `SUPABASE_ANON_KEY` with your actual anon key
+
+- `xxxxx` with your actual project subdomain (from Step 3)
+- The `SUPABASE_ANON_KEY` with your actual anon key (from Step 3)
+- `your_discord_bot_token_here` with your Discord bot token
 
 ## Step 7: Install Dependencies
 
@@ -75,6 +88,7 @@ npm install @supabase/supabase-js
 3. Start the server: `npm run dev` or `npm start`
 
 You should see:
+
 ```
 ✅ Database service initialized (Supabase)
 ✅ Summary API routes enabled
@@ -101,22 +115,26 @@ To verify summaries are being saved to Supabase:
 ## Troubleshooting
 
 ### Backend shows "Database service not initialized"
+
 - Check that `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set in `backend/.env`
 - Make sure there are no extra spaces or quotes around the values
 - Restart the backend server after adding the variables
 
 ### "Failed to save summary" error
+
 - Check that the `summaries` table exists in Supabase
 - Verify Row Level Security policies allow INSERT operations
 - Check browser console and backend logs for specific error messages
 
 ### "relation 'summaries' does not exist"
+
 - Run the SQL migration script in Supabase SQL Editor
 - Make sure the table was created successfully
 
 ## Free Tier Limits
 
 Supabase Free Tier includes:
+
 - **500 MB** database storage
 - **2 GB** bandwidth per month
 - **500 MB** file storage

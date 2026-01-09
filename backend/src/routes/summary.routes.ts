@@ -3,9 +3,7 @@ import { DatabaseService } from "../services/database.service";
 
 const router = Router();
 
-export function createSummaryRoutes(
-  databaseService: DatabaseService
-): Router {
+export function createSummaryRoutes(databaseService: DatabaseService): Router {
   // Save a summary
   router.post("/summaries", async (req: Request, res: Response) => {
     try {
@@ -62,11 +60,29 @@ export function createSummaryRoutes(
         res.json(summaries);
       } catch (error: any) {
         console.error("Error fetching summaries by channel:", error);
-        res
-          .status(500)
-          .json({
-            error: error.message || "Failed to fetch summaries by channel",
-          });
+        res.status(500).json({
+          error: error.message || "Failed to fetch summaries by channel",
+        });
+      }
+    }
+  );
+
+  // Get summary by thread ID
+  router.get(
+    "/summaries/thread/:threadId",
+    async (req: Request, res: Response) => {
+      try {
+        const { threadId } = req.params;
+        const summary = await databaseService.getSummaryByThreadId(threadId);
+        if (!summary) {
+          return res.status(404).json({ error: "Summary not found" });
+        }
+        res.json(summary);
+      } catch (error: any) {
+        console.error("Error fetching summary by thread ID:", error);
+        res.status(500).json({
+          error: error.message || "Failed to fetch summary by thread ID",
+        });
       }
     }
   );
@@ -83,28 +99,29 @@ export function createSummaryRoutes(
         res.json(summaries);
       } catch (error: any) {
         console.error("Error fetching summaries by category:", error);
-        res
-          .status(500)
-          .json({
-            error: error.message || "Failed to fetch summaries by category",
-          });
+        res.status(500).json({
+          error: error.message || "Failed to fetch summaries by category",
+        });
       }
     }
   );
 
   // Search summaries
-  router.get("/summaries/search/:query", async (req: Request, res: Response) => {
-    try {
-      const { query } = req.params;
-      const summaries = await databaseService.searchSummaries(query);
-      res.json(summaries);
-    } catch (error: any) {
-      console.error("Error searching summaries:", error);
-      res
-        .status(500)
-        .json({ error: error.message || "Failed to search summaries" });
+  router.get(
+    "/summaries/search/:query",
+    async (req: Request, res: Response) => {
+      try {
+        const { query } = req.params;
+        const summaries = await databaseService.searchSummaries(query);
+        res.json(summaries);
+      } catch (error: any) {
+        console.error("Error searching summaries:", error);
+        res
+          .status(500)
+          .json({ error: error.message || "Failed to search summaries" });
+      }
     }
-  });
+  );
 
   // Delete a summary
   router.delete("/summaries/:id", async (req: Request, res: Response) => {

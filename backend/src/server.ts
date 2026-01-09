@@ -1,12 +1,43 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 import { DiscordService } from "./services/discord.service";
 import { createDiscordRoutes } from "./routes/discord.routes";
 import { DatabaseService } from "./services/database.service";
 import { createSummaryRoutes } from "./routes/summary.routes";
 
-dotenv.config();
+// Configure dotenv to load from the backend directory
+// Try multiple paths to find .env file
+const possiblePaths: string[] = [
+  path.resolve(process.cwd(), ".env"), // When running from backend/
+];
+
+// Add paths relative to __dirname if it exists (at runtime in CommonJS)
+if (typeof __dirname !== "undefined") {
+  possiblePaths.push(
+    path.resolve(__dirname, "..", ".env"), // When running from dist/
+    path.resolve(__dirname, ".env") // Fallback
+  );
+}
+
+let envLoaded = false;
+for (const envPath of possiblePaths) {
+  const result = dotenv.config({ path: envPath });
+  if (!result.error) {
+    envLoaded = true;
+    console.log(`✅ Loaded environment variables from: ${envPath}`);
+    break;
+  }
+}
+
+if (!envLoaded) {
+  // Try default location as fallback
+  dotenv.config();
+  console.warn(
+    "⚠️  No .env file found in expected locations, trying default dotenv.config()"
+  );
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,13 +57,32 @@ const discordService = new DiscordService();
 // Initialize Database service (optional - only if Supabase is configured)
 let databaseService: DatabaseService | null = null;
 try {
+  // Log environment variables (without exposing sensitive values)
+  console.log("🔍 Checking Supabase configuration...");
+  console.log(
+    `   SUPABASE_URL: ${process.env.SUPABASE_URL ? "✓ Set" : "✗ Missing"}`
+  );
+  console.log(
+    `   SUPABASE_ANON_KEY: ${
+      process.env.SUPABASE_ANON_KEY
+        ? `✓ Set (length: ${process.env.SUPABASE_ANON_KEY.length})`
+        : "✗ Missing"
+    }`
+  );
+
   databaseService = new DatabaseService();
   console.log("✅ Database service initialized (Supabase)");
 } catch (error: any) {
-  console.warn("⚠️  Database service not initialized:", error.message);
+  console.error("❌ Database service initialization failed:");
+  console.error(`   Error: ${error.message}`);
+  console.error(`   Stack: ${error.stack}`);
+  console.warn("\n⚠️  Database service not initialized");
   console.warn("   Summaries will only be saved locally in the browser.");
   console.warn(
-    "   To enable database storage, set SUPABASE_URL and SUPABASE_ANON_KEY in .env"
+    "   To enable database storage, ensure SUPABASE_URL and SUPABASE_ANON_KEY are set in .env"
+  );
+  console.warn(
+    "   Make sure you've restarted the server after adding the .env file"
   );
 }
 

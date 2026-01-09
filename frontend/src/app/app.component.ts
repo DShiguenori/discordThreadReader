@@ -5,12 +5,14 @@ import { firstValueFrom } from "rxjs";
 import { NzLayoutModule } from "ng-zorro-antd/layout";
 import { NzButtonModule } from "ng-zorro-antd/button";
 import { NzIconModule } from "ng-zorro-antd/icon";
+import { NzModalModule, NzModalService } from "ng-zorro-antd/modal";
 import { ChannelSelectorComponent } from "./components/channel-selector/channel-selector.component";
 import { ThreadSelectorComponent } from "./components/thread-selector/thread-selector.component";
 import { SummaryViewerComponent } from "./components/summary-viewer/summary-viewer.component";
 import { SummaryListComponent } from "./components/summary-list/summary-list.component";
 import { DiscordService } from "./services/discord.service";
 import { SummaryService } from "./services/summary.service";
+import { ApiService } from "./services/api.service";
 import { Channel } from "./models/channel.model";
 import { Thread } from "./models/thread.model";
 import { Summary } from "./models/summary.model";
@@ -24,6 +26,7 @@ import { Summary } from "./models/summary.model";
     NzLayoutModule,
     NzButtonModule,
     NzIconModule,
+    NzModalModule,
     ChannelSelectorComponent,
     ThreadSelectorComponent,
     SummaryViewerComponent,
@@ -42,7 +45,9 @@ export class AppComponent {
 
   constructor(
     private discordService: DiscordService,
-    private summaryService: SummaryService
+    private summaryService: SummaryService,
+    private apiService: ApiService,
+    private modal: NzModalService
   ) {}
 
   onChannelSelected(channel: Channel): void {
@@ -51,10 +56,48 @@ export class AppComponent {
     this.summary = null;
   }
 
-  onThreadSelected(thread: Thread): void {
+  async onThreadSelected(thread: Thread): Promise<void> {
     this.selectedThread = thread;
     this.summary = null;
-    this.generateSummary();
+
+    // First, check if a summary already exists for this thread
+    try {
+      const existingSummary = await firstValueFrom(
+        this.apiService.getSummaryByThreadId(thread.id)
+      );
+      if (existingSummary) {
+        // Summary exists, show it immediately
+        this.summary = existingSummary;
+        return;
+      }
+    } catch (error: any) {
+      // If error is 404, summary doesn't exist, which is fine - proceed to confirmation
+      // For other errors, log but still allow user to try generating
+      if (error?.status && error.status !== 404) {
+        console.warn("Error checking for existing summary:", error);
+        // Show warning but still allow generation attempt
+      }
+      // If status is 404 or undefined (network error, etc.), proceed to confirmation
+    }
+
+    // Summary doesn't exist, show confirmation modal before generating
+    this.showConfirmationModal();
+  }
+
+  showConfirmationModal(): void {
+    if (!this.selectedThread || !this.selectedChannel) {
+      return;
+    }
+
+    this.modal.confirm({
+      nzTitle: "Generate Summary?",
+      nzContent: `This will call the OpenAI API to generate a summary for thread "${this.selectedThread?.name}". This will consume tokens.\n\nDo you want to proceed?`,
+      nzOkText: "Yes, Generate Summary",
+      nzCancelText: "Cancel",
+      nzOnOk: () => {
+        this.generateSummary();
+      },
+    });
   }
 
   async generateSummary(): Promise<void> {

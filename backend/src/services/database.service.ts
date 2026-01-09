@@ -35,6 +35,12 @@ export class DatabaseService {
   }
 
   async saveSummary(summary: Summary): Promise<string> {
+    // Handle createdAt - it might be a Date object or a string (from JSON)
+    const createdAtDate =
+      summary.createdAt instanceof Date
+        ? summary.createdAt
+        : new Date(summary.createdAt);
+
     const { data, error } = await this.supabase
       .from("summaries")
       .insert({
@@ -47,7 +53,7 @@ export class DatabaseService {
         channel_name: summary.channelName,
         thread_name: summary.threadName,
         attachments: summary.attachments,
-        created_at: summary.createdAt.toISOString(),
+        created_at: createdAtDate.toISOString(),
       })
       .select()
       .single();
@@ -87,7 +93,7 @@ export class DatabaseService {
       throw new Error(`Failed to get summaries: ${error.message}`);
     }
 
-    return data.map((row) => this.mapDatabaseRowToSummary(row));
+    return data.map((row: any) => this.mapDatabaseRowToSummary(row));
   }
 
   async getSummariesByChannel(channelId: string): Promise<Summary[]> {
@@ -101,7 +107,27 @@ export class DatabaseService {
       throw new Error(`Failed to get summaries by channel: ${error.message}`);
     }
 
-    return data.map((row) => this.mapDatabaseRowToSummary(row));
+    return data.map((row: any) => this.mapDatabaseRowToSummary(row));
+  }
+
+  async getSummaryByThreadId(threadId: string): Promise<Summary | null> {
+    const { data, error } = await this.supabase
+      .from("summaries")
+      .select("*")
+      .eq("thread_id", threadId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // Not found
+        return null;
+      }
+      throw new Error(`Failed to get summary by thread ID: ${error.message}`);
+    }
+
+    return this.mapDatabaseRowToSummary(data);
   }
 
   async getSummariesByCategory(category: string): Promise<Summary[]> {
@@ -115,7 +141,7 @@ export class DatabaseService {
       throw new Error(`Failed to get summaries by category: ${error.message}`);
     }
 
-    return data.map((row) => this.mapDatabaseRowToSummary(row));
+    return data.map((row: any) => this.mapDatabaseRowToSummary(row));
   }
 
   async deleteSummary(id: string): Promise<void> {
@@ -142,7 +168,7 @@ export class DatabaseService {
       throw new Error(`Failed to search summaries: ${error.message}`);
     }
 
-    return data.map((row) => this.mapDatabaseRowToSummary(row));
+    return data.map((row: any) => this.mapDatabaseRowToSummary(row));
   }
 
   private mapDatabaseRowToSummary(row: any): Summary {

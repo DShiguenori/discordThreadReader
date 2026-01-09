@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, catchError, throwError } from "rxjs";
 import { Summary } from "../models/summary.model";
 import { environment } from "../../environments/environment";
@@ -13,14 +13,12 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   saveSummary(summary: Summary): Observable<Summary> {
-    return this.http
-      .post<Summary>(`${this.apiUrl}/summaries`, summary)
-      .pipe(
-        catchError((error) => {
-          console.error("Error saving summary to API:", error);
-          return throwError(() => error);
-        })
-      );
+    return this.http.post<Summary>(`${this.apiUrl}/summaries`, summary).pipe(
+      catchError((error) => {
+        console.error("Error saving summary to API:", error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getAllSummaries(): Observable<Summary[]> {
@@ -57,7 +55,25 @@ export class ApiService {
       .get<Summary[]>(`${this.apiUrl}/summaries/category/${category}`)
       .pipe(
         catchError((error) => {
-          console.error("Error fetching summaries by category from API:", error);
+          console.error(
+            "Error fetching summaries by category from API:",
+            error
+          );
+          return throwError(() => error);
+        })
+      );
+  }
+
+  getSummaryByThreadId(threadId: string): Observable<Summary> {
+    return this.http
+      .get<Summary>(`${this.apiUrl}/summaries/thread/${threadId}`)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          // Re-throw 404 as is - it means summary doesn't exist
+          if (error.status === 404) {
+            return throwError(() => error);
+          }
+          console.error("Error fetching summary by thread ID from API:", error);
           return throwError(() => error);
         })
       );
@@ -65,7 +81,9 @@ export class ApiService {
 
   searchSummaries(query: string): Observable<Summary[]> {
     return this.http
-      .get<Summary[]>(`${this.apiUrl}/summaries/search/${encodeURIComponent(query)}`)
+      .get<Summary[]>(
+        `${this.apiUrl}/summaries/search/${encodeURIComponent(query)}`
+      )
       .pipe(
         catchError((error) => {
           console.error("Error searching summaries from API:", error);

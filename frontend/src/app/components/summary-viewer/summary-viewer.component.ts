@@ -55,11 +55,26 @@ export class SummaryViewerComponent {
 
     this.saving = true;
     try {
-      await this.storageService.saveSummary(this.summary);
-      this.message.success("Summary saved successfully");
-      this.saved.emit(this.summary);
-    } catch (error) {
-      this.message.error("Failed to save summary");
+      const result = await this.storageService.saveSummary(this.summary);
+      if (result.backendSaved) {
+        this.message.success("Summary saved successfully to database");
+        this.saved.emit(this.summary);
+      } else {
+        // Backend save failed - only saved locally
+        this.message.warning(
+          `Summary saved locally only. Backend save failed: ${
+            result.error || "Backend unavailable"
+          }. ` +
+            "Please check your backend configuration and ensure Supabase credentials are set."
+        );
+        console.error("Backend save failed:", result.error);
+        // Still emit saved event since local save succeeded
+        this.saved.emit(this.summary);
+      }
+    } catch (error: any) {
+      this.message.error(
+        `Failed to save summary: ${error?.message || "Unknown error"}`
+      );
       console.error("Error saving summary:", error);
     } finally {
       this.saving = false;
