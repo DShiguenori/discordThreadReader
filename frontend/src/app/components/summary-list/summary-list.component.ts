@@ -11,8 +11,10 @@ import { NzSelectModule } from "ng-zorro-antd/select";
 import { NzMessageModule, NzMessageService } from "ng-zorro-antd/message";
 import { NzPopconfirmModule } from "ng-zorro-antd/popconfirm";
 import { NzEmptyModule } from "ng-zorro-antd/empty";
+import { NzModalModule, NzModalService } from "ng-zorro-antd/modal";
 import { StorageService } from "../../services/storage.service";
 import { Summary } from "../../models/summary.model";
+import { SummaryViewerComponent } from "../summary-viewer/summary-viewer.component";
 
 @Component({
   selector: "app-summary-list",
@@ -30,6 +32,8 @@ import { Summary } from "../../models/summary.model";
     NzMessageModule,
     NzPopconfirmModule,
     NzEmptyModule,
+    NzModalModule,
+    SummaryViewerComponent,
   ],
   templateUrl: "./summary-list.component.html",
   styleUrls: ["./summary-list.component.css"],
@@ -54,7 +58,8 @@ export class SummaryListComponent implements OnInit {
 
   constructor(
     private storageService: StorageService,
-    private message: NzMessageService
+    private message: NzMessageService,
+    private modal: NzModalService
   ) {}
 
   ngOnInit(): void {
@@ -125,5 +130,37 @@ export class SummaryListComponent implements OnInit {
       Other: "default",
     };
     return colors[category] || "default";
+  }
+
+  viewSummary(summary: Summary): void {
+    const modalRef = this.modal.create({
+      nzTitle: summary.title,
+      nzContent: SummaryViewerComponent,
+      nzData: {
+        summary: summary,
+        loading: false,
+      },
+      nzWidth: "80%",
+      nzStyle: { top: "20px" },
+      nzFooter: null,
+    });
+
+    // Handle events after modal opens - component instance should be available
+    modalRef.afterOpen.subscribe(() => {
+      const componentInstance =
+        modalRef.componentInstance as SummaryViewerComponent;
+      if (componentInstance) {
+        // Handle the saved event from the summary viewer
+        componentInstance.saved.subscribe(() => {
+          modalRef.close();
+          this.loadSummaries();
+        });
+
+        // Handle the close event from the summary viewer
+        componentInstance.closed.subscribe(() => {
+          modalRef.close();
+        });
+      }
+    });
   }
 }

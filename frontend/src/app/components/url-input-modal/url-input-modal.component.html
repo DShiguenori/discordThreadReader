@@ -1,0 +1,13 @@
+<div style="padding: 20px 0;">
+  <input
+    nz-input
+    [(ngModel)]="threadUrl"
+    placeholder="https://discord.com/channels/733385602904490096/1458427621305094207"
+    style="width: 100%;"
+    #urlInput
+  />
+  <div style="margin-top: 12px; color: #8c8c8c; font-size: 12px;">
+    Paste a Discord thread URL to generate a summary.<br>
+    Format: https://discord.com/channels/{{ '{' }}guildId{{ '}' }}/{{ '{' }}threadId{{ '}' }}
+  </div>
+</div>

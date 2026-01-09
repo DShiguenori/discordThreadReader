@@ -1,4 +1,12 @@
-import { Component, Input, Output, EventEmitter } from "@angular/core";
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  Inject,
+  OnInit,
+  Optional,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { NzCardModule } from "ng-zorro-antd/card";
 import { NzTagModule } from "ng-zorro-antd/tag";
@@ -7,6 +15,7 @@ import { NzButtonModule } from "ng-zorro-antd/button";
 import { NzImageModule, NzImageService } from "ng-zorro-antd/image";
 import { NzSpinModule } from "ng-zorro-antd/spin";
 import { NzMessageModule, NzMessageService } from "ng-zorro-antd/message";
+import { NZ_MODAL_DATA } from "ng-zorro-antd/modal";
 import { Summary } from "../../models/summary.model";
 import { StorageService } from "../../services/storage.service";
 
@@ -26,18 +35,30 @@ import { StorageService } from "../../services/storage.service";
   templateUrl: "./summary-viewer.component.html",
   styleUrls: ["./summary-viewer.component.css"],
 })
-export class SummaryViewerComponent {
+export class SummaryViewerComponent implements OnInit {
   @Input() summary: Summary | null = null;
   @Input() loading = false;
   @Output() saved = new EventEmitter<Summary>();
+  @Output() closed = new EventEmitter<void>();
 
   saving = false;
 
   constructor(
+    @Optional()
+    @Inject(NZ_MODAL_DATA)
+    private modalData: { summary: Summary; loading: boolean } | null,
     private storageService: StorageService,
     private message: NzMessageService,
     private imageService: NzImageService
   ) {}
+
+  ngOnInit(): void {
+    // If used in a modal, use modal data; otherwise use @Input() values
+    if (this.modalData) {
+      this.summary = this.modalData.summary;
+      this.loading = this.modalData.loading ?? false;
+    }
+  }
 
   previewImage(url: string): void {
     this.imageService.preview([
@@ -46,6 +67,10 @@ export class SummaryViewerComponent {
         alt: "Attachment preview",
       },
     ]);
+  }
+
+  close(): void {
+    this.closed.emit();
   }
 
   async saveSummary(): Promise<void> {

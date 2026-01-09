@@ -44,7 +44,11 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let summary of basicTable.data">
+      <tr
+        *ngFor="let summary of basicTable.data"
+        (click)="viewSummary(summary)"
+        style="cursor: pointer"
+      >
         <td>
           <strong>{{ summary.title }}</strong>
           <div class="summary-preview">
@@ -68,7 +72,7 @@
         </td>
         <td>{{ summary.channelName || "Unknown" }}</td>
         <td>{{ summary.createdAt | date : "short" }}</td>
-        <td>
+        <td (click)="$event.stopPropagation()">
           <button
             nz-button
             nzType="link"
