@@ -22,6 +22,16 @@
         <span nz-icon nzType="file-text"></span>
         <span>Saved Summaries</span>
       </button>
+      <button
+        nz-button
+        nzType="text"
+        [class.active]="currentView === 'config'"
+        (click)="switchView('config')"
+        class="menu-button"
+      >
+        <span nz-icon nzType="setting"></span>
+        <span>Config</span>
+      </button>
     </div>
   </nz-header>
   <nz-content class="content">
@@ -52,6 +62,10 @@
     <div class="container" *ngIf="currentView === 'summaries'">
       <h1>Saved Summaries</h1>
       <app-summary-list></app-summary-list>
+    </div>
+
+    <div class="container" *ngIf="currentView === 'config'">
+      <app-config></app-config>
     </div>
   </nz-content>
 </nz-layout>

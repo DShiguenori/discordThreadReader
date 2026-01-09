@@ -1,0 +1,59 @@
+<div class="config-container">
+  <nz-spin [nzSpinning]="loading">
+    <nz-card nzTitle="AI Prompt Configuration">
+      <div class="config-description">
+        <p>
+          This is the prompt template sent to the OpenAI API when generating
+          thread summaries. You can customize it to change how summaries are
+          generated.
+        </p>
+        <p class="note">
+          <strong>Note:</strong> The prompt supports placeholders:
+          <code>{{"{{channelName}}"}}</code>, <code>{{"{{threadName}}"}}</code>,
+          and <code>{{"{{messagesText}}"}}</code> which will be replaced with
+          actual values.
+        </p>
+      </div>
+
+      <div class="prompt-editor">
+        <textarea
+          nz-input
+          [(ngModel)]="prompt"
+          (ngModelChange)="onPromptChange()"
+          [nzAutosize]="{ minRows: 20, maxRows: 30 }"
+          class="prompt-textarea"
+          placeholder="Enter your prompt template here..."
+        ></textarea>
+      </div>
+
+      <div class="config-actions">
+        <button
+          nz-button
+          nzType="default"
+          (click)="resetToDefault()"
+          [disabled]="saving || loading"
+        >
+          Reset to Default
+        </button>
+        <button
+          nz-button
+          nzType="default"
+          (click)="loadPrompt()"
+          [nzLoading]="loading"
+          [disabled]="saving"
+        >
+          Reload from Database
+        </button>
+        <button
+          nz-button
+          nzType="primary"
+          (click)="savePrompt()"
+          [nzLoading]="saving"
+          [disabled]="loading || !hasChanges || !prompt.trim()"
+        >
+          Save Prompt
+        </button>
+      </div>
+    </nz-card>
+  </nz-spin>
+</div>

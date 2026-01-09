@@ -10,6 +10,7 @@ import { ChannelSelectorComponent } from "./components/channel-selector/channel-
 import { ThreadSelectorComponent } from "./components/thread-selector/thread-selector.component";
 import { SummaryViewerComponent } from "./components/summary-viewer/summary-viewer.component";
 import { SummaryListComponent } from "./components/summary-list/summary-list.component";
+import { ConfigComponent } from "./components/config/config.component";
 import { DiscordService } from "./services/discord.service";
 import { SummaryService } from "./services/summary.service";
 import { ApiService } from "./services/api.service";
@@ -31,6 +32,7 @@ import { Summary } from "./models/summary.model";
     ThreadSelectorComponent,
     SummaryViewerComponent,
     SummaryListComponent,
+    ConfigComponent,
   ],
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.css"],
@@ -41,7 +43,7 @@ export class AppComponent {
   selectedThread: Thread | null = null;
   summary: Summary | null = null;
   generatingSummary = false;
-  currentView: "main" | "summaries" = "main";
+  currentView: "main" | "summaries" | "config" = "main";
 
   constructor(
     private discordService: DiscordService,
@@ -137,7 +139,7 @@ export class AppComponent {
     // Summary was saved, could navigate to summaries list
   }
 
-  switchView(view: "main" | "summaries"): void {
+  switchView(view: "main" | "summaries" | "config"): void {
     this.currentView = view;
   }
 }

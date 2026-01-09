@@ -6,6 +6,7 @@ import { DiscordService } from "./services/discord.service";
 import { createDiscordRoutes } from "./routes/discord.routes";
 import { DatabaseService } from "./services/database.service";
 import { createSummaryRoutes } from "./routes/summary.routes";
+import { createConfigRoutes } from "./routes/config.routes";
 
 // Configure dotenv to load from the backend directory
 // Try multiple paths to find .env file
@@ -114,7 +115,9 @@ app.use("/api", createDiscordRoutes(discordService));
 // Summary routes (only if database is configured)
 if (databaseService) {
   app.use("/api", createSummaryRoutes(databaseService));
+  app.use("/api", createConfigRoutes(databaseService));
   console.log("✅ Summary API routes enabled");
+  console.log("✅ Config API routes enabled");
 }
 
 // Health check

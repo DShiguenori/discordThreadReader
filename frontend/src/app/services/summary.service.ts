@@ -2,6 +2,8 @@ import { Injectable } from "@angular/core";
 import { environment } from "../../environments/environment";
 import { Message, Attachment } from "../models/message.model";
 import { Summary } from "../models/summary.model";
+import { ConfigService } from "./config.service";
+import { firstValueFrom } from "rxjs";
 
 @Injectable({
   providedIn: "root",
@@ -10,7 +12,26 @@ export class SummaryService {
   private openaiApiKey = environment.openaiApiKey;
   private openaiApiUrl = "https://api.openai.com/v1/chat/completions";
 
-  constructor() {}
+  private defaultPrompt = `Analyze the following Discord thread conversation and create a comprehensive summary.
+
+Thread Context:
+- Channel: {{channelName}}
+- Thread: {{threadName}}
+
+Conversation:
+{{messagesText}}
+
+Please provide a JSON response with the following structure:
+{
+  "title": "A concise, descriptive title for this discussion",
+  "summary": "A detailed summary of what was discussed, including key points and decisions",
+  "keywords": ["keyword1", "keyword2", "keyword3"],
+  "category": "One of: Technical, Discussion, Question, Announcement, Planning, Bug Report, Feature Request, Other"
+}
+
+Include references to any attachments or files mentioned in the conversation.`;
+
+  constructor(private configService: ConfigService) {}
 
   async generateSummary(
     messages: Message[],
@@ -64,25 +85,25 @@ export class SummaryService {
       allAttachments.push(...msg.attachments);
     });
 
-    // Prepare prompt
-    const prompt = `Analyze the following Discord thread conversation and create a comprehensive summary.
+    // Get prompt from database or use default
+    let promptTemplate = this.defaultPrompt;
+    try {
+      const savedPrompt = await firstValueFrom(
+        this.configService.getPrompt("default")
+      );
+      if (savedPrompt && savedPrompt.prompt) {
+        promptTemplate = savedPrompt.prompt;
+      }
+    } catch (error) {
+      // If error (e.g., 404), use default prompt
+      console.log("Using default prompt (no saved prompt found)");
+    }
 
-Thread Context:
-- Channel: ${channelName || "Unknown"}
-- Thread: ${threadName || "Unknown"}
-
-Conversation:
-${messagesText}
-
-Please provide a JSON response with the following structure:
-{
-  "title": "A concise, descriptive title for this discussion",
-  "summary": "A detailed summary of what was discussed, including key points and decisions",
-  "keywords": ["keyword1", "keyword2", "keyword3"],
-  "category": "One of: Technical, Discussion, Question, Announcement, Planning, Bug Report, Feature Request, Other"
-}
-
-Include references to any attachments or files mentioned in the conversation.`;
+    // Replace placeholders in the prompt template
+    const prompt = promptTemplate
+      .replace(/\{\{channelName\}\}/g, channelName || "Unknown")
+      .replace(/\{\{threadName\}\}/g, threadName || "Unknown")
+      .replace(/\{\{messagesText\}\}/g, messagesText);
 
     try {
       const response = await fetch(this.openaiApiUrl, {

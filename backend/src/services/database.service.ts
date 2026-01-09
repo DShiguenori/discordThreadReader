@@ -14,6 +14,14 @@ export interface Summary {
   createdAt: Date;
 }
 
+export interface Prompt {
+  id?: string;
+  key: string;
+  prompt: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export class DatabaseService {
   private supabase: SupabaseClient;
 
@@ -184,6 +192,87 @@ export class DatabaseService {
       threadName: row.thread_name,
       attachments: row.attachments || [],
       createdAt: new Date(row.created_at),
+    };
+  }
+
+  // Prompt CRUD operations
+  async getPrompt(key: string = "default"): Promise<Prompt | null> {
+    const { data, error } = await this.supabase
+      .from("prompts")
+      .select("*")
+      .eq("key", key)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // Not found
+        return null;
+      }
+      throw new Error(`Failed to get prompt: ${error.message}`);
+    }
+
+    return this.mapDatabaseRowToPrompt(data);
+  }
+
+  async savePrompt(prompt: Prompt): Promise<Prompt> {
+    const existingPrompt = await this.getPrompt(prompt.key);
+
+    if (existingPrompt) {
+      // Update existing prompt
+      const { data, error } = await this.supabase
+        .from("prompts")
+        .update({
+          prompt: prompt.prompt,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("key", prompt.key)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to update prompt: ${error.message}`);
+      }
+
+      return this.mapDatabaseRowToPrompt(data);
+    } else {
+      // Insert new prompt
+      const { data, error } = await this.supabase
+        .from("prompts")
+        .insert({
+          key: prompt.key,
+          prompt: prompt.prompt,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to save prompt: ${error.message}`);
+      }
+
+      return this.mapDatabaseRowToPrompt(data);
+    }
+  }
+
+  async deletePrompt(key: string = "default"): Promise<void> {
+    const { error } = await this.supabase
+      .from("prompts")
+      .delete()
+      .eq("key", key);
+
+    if (error) {
+      throw new Error(`Failed to delete prompt: ${error.message}`);
+    }
+  }
+
+  private mapDatabaseRowToPrompt(row: any): Prompt {
+    return {
+      id: row.id,
+      key: row.key,
+      prompt: row.prompt,
+      createdAt: row.created_at ? new Date(row.created_at) : undefined,
+      updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
     };
   }
 }
